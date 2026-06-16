@@ -19,7 +19,7 @@ from starlette.middleware.sessions import SessionMiddleware  # noqa: E402
 from app.agent.checkpointer import psycopg_conn_string  # noqa: E402
 from app.agent.graph import build_graph  # noqa: E402
 from app.config import get_settings  # noqa: E402
-from app.routers import health, research  # noqa: E402
+from app.routers import auth, health, research  # noqa: E402
 from app.run_manager import RunManager  # noqa: E402
 
 settings = get_settings()
@@ -58,6 +58,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router)
 app.include_router(research.router)
 app.include_router(research.reports_router)
 

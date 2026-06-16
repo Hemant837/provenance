@@ -7,6 +7,15 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    email: str
+    name: str | None = None
+    avatar_url: str | None = None
+
+
 class ResearchCreateIn(BaseModel):
     query: str = Field(min_length=3, max_length=2000)
 
