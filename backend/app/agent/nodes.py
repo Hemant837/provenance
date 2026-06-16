@@ -3,6 +3,7 @@
 import asyncio
 
 from langchain_openai import ChatOpenAI
+from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 
 from app.agent.prompts import (
@@ -45,6 +46,12 @@ async def plan_node(state: ResearchState) -> dict:
             f"feedback. Refine the sub-queries to address it:\n{feedback}"
         )
 
+    writer = get_stream_writer()
+    if feedback:
+        writer({"node": "plan", "message": "Re-planning with reviewer feedback…"})
+    else:
+        writer({"node": "plan", "message": "Breaking the query into sub-questions…"})
+
     llm = _llm(temperature=0.0).with_structured_output(PlanOutput)
     result: PlanOutput = await llm.ainvoke(
         [
@@ -52,14 +59,22 @@ async def plan_node(state: ResearchState) -> dict:
             ("human", human),
         ]
     )
+    for sq in result.sub_queries:
+        writer({"node": "plan", "message": f"Sub-query: {sq}"})
     return {"sub_queries": result.sub_queries}
 
 
 async def search_node(state: ResearchState) -> dict:
     """Run a Tavily search for each sub-query, concurrently."""
     sub_queries = state["sub_queries"]
+    writer = get_stream_writer()
+    for sq in sub_queries:
+        writer({"node": "search", "message": f"Searching the web for: {sq}"})
+
     batches = await asyncio.gather(*(search(sq) for sq in sub_queries))
     results: list[SearchResult] = [r for batch in batches for r in batch]
+
+    writer({"node": "search", "message": f"Collected {len(results)} results."})
     return {"search_results": results}
 
 
@@ -76,6 +91,9 @@ def _dedupe_sources(results: list[SearchResult]) -> list[Citation]:
 
 async def synthesize_node(state: ResearchState) -> dict:
     """Draft a structured, cited report from the search results."""
+    writer = get_stream_writer()
+    writer({"node": "synthesize", "message": "Writing the report and attaching citations…"})
+
     results = state["search_results"]
     citations = _dedupe_sources(results)
     url_to_n = {c.url: c.n for c in citations}

@@ -20,10 +20,29 @@ cp .env.example .env   # then fill in Neon, OpenAI, Tavily, Google OAuth values
 uv run alembic upgrade head
 
 # Start the dev server
-uv run uvicorn app.main:app --reload --port 8000
+uv run python run_server.py            # Windows (selector event loop)
+# uv run uvicorn app.main:app --reload # Linux/macOS
 ```
 
+On Windows the server must start via `run_server.py`: psycopg's async driver
+(LangGraph's Postgres checkpointer) can't run on the default ProactorEventLoop,
+and uvicorn's CLI forces that loop. The launcher installs a selector loop first.
+On Linux (Render) the plain `uvicorn` CLI is fine.
+
 Health checks: `GET /health` and `GET /health/db`.
+
+## API
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/research` | Start a run → `{id, status, ...}` |
+| GET | `/research/{id}/stream` | SSE: live node/log events, `hitl_ready`, `complete` |
+| POST | `/research/{id}/review` | Resume HITL: `{decision: approve\|edit\|reject, edited_content?, feedback?}` |
+| GET | `/research/{id}/status` | Current run status |
+| GET | `/research/{id}/report` | Final report |
+| GET | `/reports` | List the user's runs |
+
+Auth is a dev stub (single dev user) until step 5 wires Google OAuth.
 
 ## Layout
 
