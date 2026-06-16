@@ -51,6 +51,7 @@ async def stream_research(
 ):
     run = await _owned_run(run_id, db, user)
     manager = request.app.state.run_manager
+    graph = request.app.state.graph
 
     # If already complete, replay the final result so a late/re-connecting client
     # still gets a terminal event instead of hanging.
@@ -68,10 +69,22 @@ async def stream_research(
 
         return StreamingResponse(replay(), media_type="text/event-stream")
 
-    manager.ensure_started(str(run_id), run.query)
+    # Only (re)start the driver for runs that haven't reached the review gate.
+    if run.status in (
+        RunStatus.pending,
+        RunStatus.planning,
+        RunStatus.searching,
+        RunStatus.synthesizing,
+    ):
+        manager.ensure_started(str(run_id), run.query)
+
+    # Snapshot the current state so a reconnecting client can rebuild the UI
+    # even though earlier live events have already been consumed.
+    snapshot = await _connect_snapshot(graph, run)
 
     async def event_source():
-        yield _sse({"event": "status", "data": {"status": run.status.value}})
+        for event in snapshot:
+            yield _sse(event)
         async for event in manager.subscribe(str(run_id)):
             if await request.is_disconnected():
                 break
@@ -82,6 +95,34 @@ async def stream_research(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+async def _connect_snapshot(graph, run) -> list[dict]:
+    """Events to emit immediately on (re)connect, derived from current state."""
+    events: list[dict] = [{"event": "status", "data": {"status": run.status.value}}]
+    if run.status == RunStatus.failed:
+        events.append(
+            {"event": "error", "data": {"message": run.error or "The run failed."}}
+        )
+    elif run.status == RunStatus.awaiting_review:
+        # Rebuild the review payload from the checkpointed graph state.
+        state = await graph.aget_state({"configurable": {"thread_id": str(run.id)}})
+        values = state.values if state else {}
+        citations = values.get("citations", [])
+        events.append(
+            {
+                "event": "hitl_ready",
+                "data": {
+                    "summary": values.get("summary", ""),
+                    "draft": values.get("draft", ""),
+                    "citations": [
+                        c.model_dump() if hasattr(c, "model_dump") else c
+                        for c in citations
+                    ],
+                },
+            }
+        )
+    return events
 
 
 @router.post("/{run_id}/review", response_model=RunOut)
