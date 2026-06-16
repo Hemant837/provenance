@@ -59,4 +59,8 @@ class ResearchState(TypedDict, total=False):
     citations: list[Citation]
     summary: str
     draft: str
+    # HITL: set when the reviewer resumes the graph.
+    decision: str  # "approve" | "edit" | "reject"
+    human_feedback: str | None  # carried into a re-search on reject
+    revision: int  # how many reject loops have run
     final_report: str

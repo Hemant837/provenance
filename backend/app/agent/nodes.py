@@ -3,6 +3,7 @@
 import asyncio
 
 from langchain_openai import ChatOpenAI
+from langgraph.types import interrupt
 
 from app.agent.prompts import (
     PLANNER_SYSTEM,
@@ -31,12 +32,24 @@ def _llm(temperature: float = 0.2) -> ChatOpenAI:
 
 
 async def plan_node(state: ResearchState) -> dict:
-    """Decompose the query into focused sub-queries."""
+    """Decompose the query into focused sub-queries.
+
+    On a reject loop, the reviewer's feedback is folded in so the new plan
+    targets what the previous attempt missed.
+    """
+    human = f"Research query:\n{state['query']}"
+    feedback = state.get("human_feedback")
+    if feedback:
+        human += (
+            "\n\nThe previous report was rejected by a human reviewer with this "
+            f"feedback. Refine the sub-queries to address it:\n{feedback}"
+        )
+
     llm = _llm(temperature=0.0).with_structured_output(PlanOutput)
     result: PlanOutput = await llm.ainvoke(
         [
             ("system", PLANNER_SYSTEM),
-            ("human", f"Research query:\n{state['query']}"),
+            ("human", human),
         ]
     )
     return {"sub_queries": result.sub_queries}
@@ -100,6 +113,36 @@ async def synthesize_node(state: ResearchState) -> dict:
     }
 
 
+async def hitl_node(state: ResearchState) -> dict:
+    """Pause for human review of the draft.
+
+    The graph halts here until it is resumed with a decision payload:
+        {"decision": "approve" | "edit" | "reject",
+         "edited_content": <str, for edit>,
+         "feedback": <str, for reject>}
+    """
+    decision_payload = interrupt(
+        {
+            "summary": state.get("summary", ""),
+            "draft": state.get("draft", ""),
+            "citations": [c.model_dump() for c in state.get("citations", [])],
+        }
+    )
+
+    decision = decision_payload.get("decision", "approve")
+    update: dict = {"decision": decision}
+
+    if decision == "edit":
+        edited = decision_payload.get("edited_content")
+        if edited:
+            update["draft"] = edited
+    elif decision == "reject":
+        update["human_feedback"] = decision_payload.get("feedback")
+        update["revision"] = state.get("revision", 0) + 1
+
+    return update
+
+
 async def finalize_node(state: ResearchState) -> dict:
-    """Produce the final report. (HITL is added in a later build step.)"""
+    """Produce the final report from the (possibly edited) draft."""
     return {"final_report": state["draft"]}
