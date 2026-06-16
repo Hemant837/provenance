@@ -19,8 +19,11 @@ class Settings(BaseSettings):
     # Example: postgresql+asyncpg://user:pass@host/db
     database_url: str
     # Sync/psycopg URL for the LangGraph Postgres checkpointer + Alembic.
-    # Example: postgresql://user:pass@host/db
+    # Example: postgresql+psycopg://user:pass@host/db?sslmode=require
     database_url_sync: str
+    # SSL mode passed to asyncpg via connect_args (Neon requires SSL).
+    # Use "" to disable (e.g. local Postgres without SSL).
+    db_ssl: str = "require"
 
     # LLM + search
     openai_api_key: str

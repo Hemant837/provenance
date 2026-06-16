@@ -13,10 +13,17 @@ from app.config import get_settings
 
 settings = get_settings()
 
+# asyncpg does not accept libpq URL params like ?sslmode=require. Keep them OUT of
+# DATABASE_URL and pass SSL here instead. Neon requires SSL, so default to "require".
+connect_args: dict = {}
+if settings.database_url.startswith("postgresql+asyncpg") and settings.db_ssl:
+    connect_args["ssl"] = settings.db_ssl
+
 engine = create_async_engine(
     settings.database_url,
     echo=settings.environment == "development",
     pool_pre_ping=True,
+    connect_args=connect_args,
 )
 
 AsyncSessionLocal = async_sessionmaker(
