@@ -1,6 +1,7 @@
 """Research graph nodes: plan, search, synthesize, finalize."""
 
 import asyncio
+import re
 
 from langchain_openai import ChatOpenAI
 from langgraph.config import get_stream_writer
@@ -71,8 +72,18 @@ async def search_node(state: ResearchState) -> dict:
     for sq in sub_queries:
         writer({"node": "search", "message": f"Searching the web for: {sq}"})
 
-    batches = await asyncio.gather(*(search(sq) for sq in sub_queries))
-    results: list[SearchResult] = [r for batch in batches for r in batch]
+    batches = await asyncio.gather(
+        *(search(sq) for sq in sub_queries), return_exceptions=True
+    )
+    results: list[SearchResult] = []
+    for sq, batch in zip(sub_queries, batches):
+        if isinstance(batch, Exception):
+            writer({"node": "search", "message": f"Search failed for: {sq} (skipped)"})
+            continue
+        results.extend(batch)
+
+    if not results:
+        raise RuntimeError("All web searches failed — please try again.")
 
     writer({"node": "search", "message": f"Collected {len(results)} results."})
     return {"search_results": results}
@@ -87,6 +98,36 @@ def _dedupe_sources(results: list[SearchResult]) -> list[Citation]:
             seen.add(r.url)
             citations.append(Citation(n=len(citations) + 1, title=r.title, url=r.url))
     return citations
+
+
+_CITATION_RE = re.compile(r"\[(\d+)\]")
+
+
+def _prune_and_renumber(
+    content: str, citations: list[Citation]
+) -> tuple[str, list[Citation]]:
+    """Keep only sources actually cited in the report, then renumber both the
+    inline [n] markers and the citation list sequentially (1..k).
+
+    Sources the agent gathered but never cited (often off-topic search noise)
+    are dropped so the report's source list reflects what was actually used.
+    """
+    used = {int(m) for m in _CITATION_RE.findall(content)}
+    cited = [c for c in citations if c.n in used]
+    if not cited:
+        # The agent cited nothing recognizable — keep the originals rather than
+        # stripping every source.
+        return content, citations
+
+    remap = {c.n: i + 1 for i, c in enumerate(cited)}
+    new_content = _CITATION_RE.sub(
+        lambda m: f"[{remap[int(m.group(1))]}]" if int(m.group(1)) in remap else m.group(0),
+        content,
+    )
+    new_citations = [
+        Citation(n=remap[c.n], title=c.title, url=c.url) for c in cited
+    ]
+    return new_content, new_citations
 
 
 async def synthesize_node(state: ResearchState) -> dict:
@@ -124,10 +165,11 @@ async def synthesize_node(state: ResearchState) -> dict:
             ),
         ]
     )
+    content, used_citations = _prune_and_renumber(report.content_markdown, citations)
     return {
         "summary": report.summary,
-        "draft": report.content_markdown,
-        "citations": citations,
+        "draft": content,
+        "citations": used_citations,
     }
 
 

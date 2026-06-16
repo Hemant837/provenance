@@ -8,6 +8,10 @@ queries that together comprehensively cover the topic. Each sub-query should:
 players, trade-offs, recent developments, etc.)
 - be phrased as an effective web search query (concise, keyword-rich)
 - avoid overlap with the other sub-queries
+- stay anchored to the specific subject and named entities in the user's \
+question. If a key term is ambiguous (has unrelated common meanings — e.g. \
+"memory" as hardware vs. agent memory, "Python" the language vs. the animal), \
+add disambiguating words so searches don't drift to the wrong topic.
 
 Return only the list of sub-queries."""
 

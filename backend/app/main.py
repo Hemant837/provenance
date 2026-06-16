@@ -31,6 +31,10 @@ async def lifespan(app: FastAPI):
         conninfo=psycopg_conn_string(),
         max_size=10,
         open=False,
+        # Neon drops idle connections; validate (and recycle) on checkout so a
+        # stale connection never reaches the checkpointer.
+        check=AsyncConnectionPool.check_connection,
+        max_idle=60.0,
         kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
     )
     await pool.open()

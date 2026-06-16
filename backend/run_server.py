@@ -14,6 +14,7 @@ On Linux (e.g. Render) the plain `uvicorn app.main:app` CLI works fine.
 """
 
 import asyncio
+import os
 import sys
 
 if sys.platform == "win32":
@@ -24,10 +25,11 @@ import uvicorn  # noqa: E402
 if __name__ == "__main__":
     # loop="none" stops uvicorn from forcing its own (Proactor) loop policy on
     # Windows, so the selector loop we install above is the one that runs.
+    # PORT/HOST come from env (Render provides $PORT in production).
     config = uvicorn.Config(
         "app.main:app",
-        host="127.0.0.1",
-        port=8000,
+        host=os.getenv("HOST", "127.0.0.1"),
+        port=int(os.getenv("PORT", "8000")),
         loop="none",
     )
     asyncio.run(uvicorn.Server(config).serve())
