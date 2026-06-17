@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { devLogin, googleLoginUrl, setToken } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+import { usePageTitle } from "@/hooks/use-page-title"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -20,6 +21,8 @@ export default function LoginPage() {
   const router = useRouter()
   const { user, loading, refresh } = useAuth()
   const [devBusy, setDevBusy] = React.useState(false)
+
+  usePageTitle("Sign in")
 
   React.useEffect(() => {
     if (!loading && user) router.replace("/")

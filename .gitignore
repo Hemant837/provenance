@@ -1,0 +1,7 @@
+# Private notes — never commit (kept out of the public repo)
+*.private.md
+docs/*.private.md
+
+# OS junk
+.DS_Store
+Thumbs.db
