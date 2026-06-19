@@ -1,10 +1,9 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, Copy, FileText, Loader2 } from "lucide-react"
+import { ArrowLeft, Copy, FileText } from "lucide-react"
 import { toast } from "sonner"
 
 import { fetchReport } from "@/lib/api"
@@ -13,10 +12,10 @@ import { usePageTitle } from "@/hooks/use-page-title"
 import { SiteHeader } from "@/components/site-header"
 import { Markdown } from "@/components/markdown"
 import { SourcesPanel } from "@/components/report/sources-panel"
+import { ReportSkeleton } from "@/components/skeletons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ReportPage() {
   const { id } = useParams<{ id: string }>()
@@ -30,12 +29,8 @@ export default function ReportPage() {
 
   usePageTitle(reportQuery.data?.query ?? "Report")
 
-  if (loading || !user) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    )
+  if (loading || !user || reportQuery.isLoading) {
+    return <ReportSkeleton />
   }
 
   const report = reportQuery.data
@@ -56,13 +51,7 @@ export default function ReportPage() {
           </Link>
         </Button>
 
-        {reportQuery.isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-9 w-3/4" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        ) : reportQuery.isError || !report ? (
+        {reportQuery.isError || !report ? (
           <p className="text-sm text-muted-foreground">
             This report isn&apos;t available.{" "}
             <Link href="/" className="text-primary underline">

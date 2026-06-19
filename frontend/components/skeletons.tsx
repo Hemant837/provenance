@@ -87,16 +87,40 @@ export function ReportSkeleton() {
   )
 }
 
-/** Lightweight placeholder while the landing chunk loads. */
+/** Placeholder while the landing chunk loads — mirrors hero + both grids. */
 export function LandingSkeleton() {
   return (
     <>
       <HeaderSkeleton />
-      <main className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-24">
+      {/* Hero */}
+      <section className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-24">
         <Skeleton className="h-12 w-full max-w-xl" />
         <Skeleton className="h-4 w-80 max-w-full" />
-        <Skeleton className="mt-4 h-11 w-44 rounded-md" />
-      </main>
+        <div className="mt-4 flex gap-3">
+          <Skeleton className="h-11 w-44 rounded-md" />
+          <Skeleton className="h-11 w-36 rounded-md" />
+        </div>
+      </section>
+
+      {/* How it works — 4 steps */}
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <Skeleton className="mx-auto h-4 w-28" />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full rounded-lg" />
+          ))}
+        </div>
+      </section>
+
+      {/* Features grid */}
+      <section className="mx-auto max-w-5xl px-4 py-16">
+        <Skeleton className="mx-auto h-7 w-80 max-w-full" />
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-36 w-full rounded-lg" />
+          ))}
+        </div>
+      </section>
     </>
   )
 }

@@ -29,6 +29,7 @@ import {
   type StepStatus,
 } from "@/components/research/stepper"
 import { ReviewPanel } from "@/components/research/review-panel"
+import { ResearchSkeleton } from "@/components/skeletons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -173,12 +174,11 @@ export default function ResearchPage() {
         }
       } catch {
         toast.error("Could not submit your review.")
-      }
-      finally {
+      } finally {
         setBusy(false)
       }
     },
-    [id],
+    [id]
   )
 
   async function onRetry() {
@@ -216,12 +216,17 @@ export default function ResearchPage() {
                     This run didn&apos;t finish
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    A web search or model call failed. You can try the same question again.
+                    A web search or model call failed. You can try the same
+                    question again.
                   </p>
                 </CardHeader>
                 <CardContent className="flex gap-2">
                   <Button onClick={onRetry} disabled={retrying || !title}>
-                    {retrying ? <Loader2 className="size-4 animate-spin" /> : "Try again"}
+                    {retrying ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      "Try again"
+                    )}
                   </Button>
                   <Button variant="ghost" onClick={() => router.replace("/")}>
                     Back home
@@ -252,7 +257,7 @@ export default function ResearchPage() {
                             i === logs.length - 1 && "text-foreground"
                           )}
                         >
-                          <span className="select-none text-primary">›</span>
+                          <span className="text-primary select-none">›</span>
                           {line}
                         </p>
                       ))
