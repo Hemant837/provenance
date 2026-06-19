@@ -15,7 +15,7 @@ function CallbackInner() {
   React.useEffect(() => {
     const token = params.get("token")
     if (!token) {
-      router.replace("/login")
+      router.replace("/")
       return
     }
     setToken(token)

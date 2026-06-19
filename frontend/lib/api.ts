@@ -80,11 +80,6 @@ export async function submitReview(
   return runSchema.parse(data)
 }
 
-export async function devLogin() {
-  const { data } = await http.post("/auth/dev-token")
-  return data.access_token as string
-}
-
 // --- auth + SSE URLs ---
 
 export function googleLoginUrl() {

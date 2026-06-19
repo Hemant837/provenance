@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = React.useCallback(() => {
     clearToken()
     setUser(null)
-    router.push("/login")
+    router.push("/")
   }, [router])
 
   return (
@@ -61,12 +61,12 @@ export function useAuth() {
   return ctx
 }
 
-/** Redirects to /login if not authenticated once loading settles. */
+/** Redirects to the landing page if not authenticated once loading settles. */
 export function useRequireAuth() {
   const { user, loading } = useAuth()
   const router = useRouter()
   React.useEffect(() => {
-    if (!loading && !user) router.replace("/login")
+    if (!loading && !user) router.replace("/")
   }, [loading, user, router])
   return { user, loading }
 }
