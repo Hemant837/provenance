@@ -60,17 +60,22 @@ export default function LoginPage() {
           <Button asChild size="lg">
             <a href={googleLoginUrl()}>Continue with Google</a>
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleDevLogin}
-            disabled={devBusy}
-          >
-            {devBusy ? "Signing in…" : "Continue as dev"}
-          </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            “Continue as dev” works only while the backend runs in development.
-          </p>
+          {/* Dev-only shortcut — hidden in production builds. */}
+          {process.env.NODE_ENV !== "production" && (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleDevLogin}
+                disabled={devBusy}
+              >
+                {devBusy ? "Signing in…" : "Continue as dev"}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                “Continue as dev” works only while the backend runs in development.
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
     </main>
