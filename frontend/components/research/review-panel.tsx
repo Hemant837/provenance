@@ -16,7 +16,11 @@ type Props = {
   onDecision: (decision: ReviewDecision, text: string) => void
 }
 
-export function ReviewPanel({ payload, busy, onDecision }: Props) {
+export const ReviewPanel = React.memo(function ReviewPanel({
+  payload,
+  busy,
+  onDecision,
+}: Props) {
   const [mode, setMode] = React.useState<"none" | "edit" | "reject">("none")
   const [editText, setEditText] = React.useState(payload.draft)
   const [feedback, setFeedback] = React.useState("")
@@ -98,4 +102,4 @@ export function ReviewPanel({ payload, busy, onDecision }: Props) {
       </CardContent>
     </Card>
   )
-}
+})

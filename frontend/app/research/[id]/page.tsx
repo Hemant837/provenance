@@ -155,27 +155,31 @@ export default function ResearchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id])
 
-  async function onDecision(decision: ReviewDecision, text: string) {
-    setBusy(true)
-    try {
-      await submitReview(id, {
-        decision,
-        edited_content: decision === "edit" ? text : undefined,
-        feedback: decision === "reject" ? text : undefined,
-      })
-      setHitl(null)
-      if (decision === "reject") {
-        setLogs((l) => [...l, "— Re-researching with your feedback —"])
-        setStatuses(stagesUpTo("plan"))
-      } else {
-        setStatuses(stagesUpTo("finalize"))
+  const onDecision = React.useCallback(
+    async (decision: ReviewDecision, text: string) => {
+      setBusy(true)
+      try {
+        await submitReview(id, {
+          decision,
+          edited_content: decision === "edit" ? text : undefined,
+          feedback: decision === "reject" ? text : undefined,
+        })
+        setHitl(null)
+        if (decision === "reject") {
+          setLogs((l) => [...l, "— Re-researching with your feedback —"])
+          setStatuses(stagesUpTo("plan"))
+        } else {
+          setStatuses(stagesUpTo("finalize"))
+        }
+      } catch {
+        toast.error("Could not submit your review.")
       }
-    } catch {
-      toast.error("Could not submit your review.")
-    } finally {
-      setBusy(false)
-    }
-  }
+      finally {
+        setBusy(false)
+      }
+    },
+    [id],
+  )
 
   async function onRetry() {
     setRetrying(true)
@@ -189,11 +193,7 @@ export default function ResearchPage() {
   }
 
   if (loading || !user) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    )
+    return <ResearchSkeleton />
   }
 
   return (

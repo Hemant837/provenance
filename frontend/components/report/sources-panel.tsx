@@ -1,3 +1,4 @@
+import * as React from "react"
 import { ExternalLink } from "lucide-react"
 
 import type { Citation } from "@/lib/schemas"
@@ -11,7 +12,11 @@ function favicon(url: string) {
   }
 }
 
-export function SourcesPanel({ citations }: { citations: Citation[] }) {
+export const SourcesPanel = React.memo(function SourcesPanel({
+  citations,
+}: {
+  citations: Citation[]
+}) {
   return (
     <ol className="space-y-2">
       {citations.map((c) => (
@@ -43,4 +48,4 @@ export function SourcesPanel({ citations }: { citations: Citation[] }) {
       ))}
     </ol>
   )
-}
+})

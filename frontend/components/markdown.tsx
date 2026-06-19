@@ -29,7 +29,7 @@ function linkifyCitations(children: React.ReactNode): React.ReactNode {
   })
 }
 
-export function Markdown({
+export const Markdown = React.memo(function Markdown({
   children,
   className,
   linkCitations = false,
@@ -93,4 +93,4 @@ export function Markdown({
       </ReactMarkdown>
     </div>
   )
-}
+})

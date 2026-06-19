@@ -1,3 +1,4 @@
+import * as React from "react"
 import { Check, Circle, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -13,7 +14,11 @@ export const STEPS = [
 export type StepKey = (typeof STEPS)[number]["key"]
 export type StepStatus = "pending" | "active" | "done"
 
-export function Stepper({ statuses }: { statuses: Record<StepKey, StepStatus> }) {
+export const Stepper = React.memo(function Stepper({
+  statuses,
+}: {
+  statuses: Record<StepKey, StepStatus>
+}) {
   return (
     <ol className="space-y-1">
       {STEPS.map((step) => {
@@ -38,4 +43,4 @@ export function Stepper({ statuses }: { statuses: Record<StepKey, StepStatus> })
       })}
     </ol>
   )
-}
+})
