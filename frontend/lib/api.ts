@@ -26,6 +26,15 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY)
 }
 
+/** Pull a human-readable message from an API error (e.g. a 429 detail). */
+export function apiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const detail = err.response?.data?.detail
+    if (typeof detail === "string") return detail
+  }
+  return fallback
+}
+
 export const http = axios.create({ baseURL: API_URL })
 
 http.interceptors.request.use((config) => {

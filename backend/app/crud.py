@@ -1,8 +1,9 @@
 """Database access helpers for runs, reports, and HITL reviews."""
 
 import uuid
+from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
@@ -39,6 +40,26 @@ async def create_run(db: AsyncSession, *, user_id: uuid.UUID, query: str) -> Res
 
 async def get_run(db: AsyncSession, run_id: uuid.UUID) -> ResearchRun | None:
     return await db.get(ResearchRun, run_id)
+
+
+async def count_user_runs_since(
+    db: AsyncSession, user_id: uuid.UUID, since: datetime
+) -> int:
+    result = await db.execute(
+        select(func.count())
+        .select_from(ResearchRun)
+        .where(ResearchRun.user_id == user_id, ResearchRun.created_at >= since)
+    )
+    return result.scalar_one()
+
+
+async def count_runs_since(db: AsyncSession, since: datetime) -> int:
+    result = await db.execute(
+        select(func.count())
+        .select_from(ResearchRun)
+        .where(ResearchRun.created_at >= since)
+    )
+    return result.scalar_one()
 
 
 async def list_runs(db: AsyncSession, user_id: uuid.UUID) -> list[ResearchRun]:

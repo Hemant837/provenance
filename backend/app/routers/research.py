@@ -2,15 +2,19 @@
 
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
+from app.config import get_settings
 from app.db import get_db
 from app.deps import get_current_user
 from app.models import RunStatus, User
+
+settings = get_settings()
 from app.schemas import (
     CitationOut,
     ReportListItem,
@@ -37,6 +41,26 @@ async def create_research(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    # Usage guardrails (rolling 24h) to cap API spend on a public demo.
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+
+    user_runs = await crud.count_user_runs_since(db, user.id, since)
+    if user_runs >= settings.max_runs_per_user_per_day:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Daily limit reached ({settings.max_runs_per_user_per_day} "
+                "researches per 24 hours). Please try again later."
+            ),
+        )
+
+    global_runs = await crud.count_runs_since(db, since)
+    if global_runs >= settings.max_runs_global_per_day:
+        raise HTTPException(
+            status_code=429,
+            detail="The demo has reached its daily capacity. Please try again tomorrow.",
+        )
+
     run = await crud.create_run(db, user_id=user.id, query=body.query)
     # The driver starts when the client connects to /stream, so no events are missed.
     return run

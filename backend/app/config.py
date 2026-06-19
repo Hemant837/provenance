@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
     tavily_api_key: str
 
+    # Usage guardrails (rolling 24h window) — protect API spend on a public demo.
+    max_runs_per_user_per_day: int = 5
+    max_runs_global_per_day: int = 50
+
     # LangSmith tracing
     langsmith_tracing: bool = False
     langsmith_api_key: str | None = None

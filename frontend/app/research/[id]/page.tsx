@@ -6,7 +6,13 @@ import { useQueryClient } from "@tanstack/react-query"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { createResearch, fetchRun, streamUrl, submitReview } from "@/lib/api"
+import {
+  apiErrorMessage,
+  createResearch,
+  fetchRun,
+  streamUrl,
+  submitReview,
+} from "@/lib/api"
 import {
   hitlPayloadSchema,
   type HitlPayload,
@@ -176,8 +182,8 @@ export default function ResearchPage() {
     try {
       const run = await createResearch(title)
       router.replace(`/research/${run.id}`)
-    } catch {
-      toast.error("Could not start a new run.")
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "Could not start a new run."))
       setRetrying(false)
     }
   }

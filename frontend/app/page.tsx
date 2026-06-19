@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ArrowRight, Loader2, Search } from "lucide-react"
 import { toast } from "sonner"
 
-import { createResearch, fetchReports } from "@/lib/api"
+import { apiErrorMessage, createResearch, fetchReports } from "@/lib/api"
 import { useRequireAuth } from "@/lib/auth"
 import { usePageTitle } from "@/hooks/use-page-title"
 import type { ReportListItem } from "@/lib/schemas"
@@ -60,7 +60,8 @@ export default function HomePage() {
       void queryClient.invalidateQueries({ queryKey: ["reports"] })
       router.push(`/research/${run.id}`)
     },
-    onError: () => toast.error("Could not start research. Try again."),
+    onError: (err) =>
+      toast.error(apiErrorMessage(err, "Could not start research. Try again.")),
   })
 
   if (loading || !user) {
