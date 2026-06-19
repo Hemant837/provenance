@@ -18,7 +18,7 @@ from starlette.middleware.sessions import SessionMiddleware  # noqa: E402
 
 from app.agent.checkpointer import psycopg_conn_string  # noqa: E402
 from app.agent.graph import build_graph  # noqa: E402
-from app.config import get_settings  # noqa: E402
+from app.config import configure_langsmith, get_settings  # noqa: E402
 from app.routers import auth, health, research  # noqa: E402
 from app.run_manager import RunManager  # noqa: E402
 
@@ -40,6 +40,12 @@ async def lifespan(app: FastAPI):
     await pool.open()
     checkpointer = AsyncPostgresSaver(pool)
     await checkpointer.setup()
+
+    if configure_langsmith():
+        print(
+            f"LangSmith tracing enabled (project: {settings.langsmith_project}).",
+            flush=True,
+        )
 
     app.state.graph = build_graph(checkpointer=checkpointer)
     app.state.run_manager = RunManager(app.state.graph)

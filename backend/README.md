@@ -42,7 +42,20 @@ Health checks: `GET /health` and `GET /health/db`.
 | GET | `/research/{id}/report` | Final report |
 | GET | `/reports` | List the user's runs |
 
-Auth is a dev stub (single dev user) until step 5 wires Google OAuth.
+## Observability (LangSmith)
+
+Tracing is **off by default**. To see every agent run (each node, LLM/tool call,
+tokens, latency) in LangSmith, get an API key from smith.langchain.com and set in
+`.env`:
+
+```
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2-...
+LANGSMITH_PROJECT=provenance
+```
+
+These are exported to the environment on startup (`configure_langsmith`) so
+LangChain/LangGraph pick them up automatically — no code changes needed.
 
 ## Layout
 

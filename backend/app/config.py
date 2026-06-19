@@ -1,5 +1,6 @@
 """Application configuration loaded from environment variables."""
 
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -52,3 +53,23 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore[call-arg]
+
+
+def configure_langsmith() -> bool:
+    """Activate LangSmith tracing if enabled.
+
+    LangChain/LangGraph read tracing config from os.environ, but pydantic-settings
+    only loads it into our Settings object — so we export the values here. Call
+    once at startup (server lifespan and the CLI). Returns whether tracing is on.
+    """
+    s = get_settings()
+    if not (s.langsmith_tracing and s.langsmith_api_key):
+        return False
+    os.environ["LANGSMITH_TRACING"] = "true"
+    os.environ["LANGSMITH_API_KEY"] = s.langsmith_api_key
+    os.environ["LANGSMITH_PROJECT"] = s.langsmith_project
+    # Back-compat env names for older LangChain integrations.
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = s.langsmith_api_key
+    os.environ["LANGCHAIN_PROJECT"] = s.langsmith_project
+    return True

@@ -21,6 +21,9 @@ if sys.platform == "win32":
 
 from app.agent.checkpointer import open_checkpointer
 from app.agent.graph import build_graph
+from app.config import configure_langsmith
+
+configure_langsmith()
 
 
 def _interrupt_value(result: dict):
